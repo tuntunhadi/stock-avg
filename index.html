@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Average Down Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">Kalkulator Rata-Rata Saham</h1>
+            <p class="text-slate-500 mt-2">Hitung biaya rata-rata (Average Down) investasi saham Anda dengan mudah.</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl p-6 card-shadow border border-slate-100">
+            
+            <div id="pembelian-container">
+                <!-- Row 1 -->
+                <div class="pembelian-row grid grid-cols-12 gap-4 mb-4 items-end">
+                    <div class="col-span-6 md:col-span-5">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Beli (Per Lembar)</label>
+                        <input type="number" class="harga-input w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Contoh: 400" oninput="hitungSemua()">
+                    </div>
+                    <div class="col-span-4 md:col-span-5">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Jumlah Lot</label>
+                        <input type="number" class="lot-input w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Contoh: 1" oninput="hitungSemua()">
+                    </div>
+                    <div class="col-span-2 md:col-span-2 flex justify-end">
+                        <button onclick="hapusBaris(this)" class="p-2 text-slate-400 hover:text-red-500 transition-colors hidden first-delete-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Tambah -->
+            <button onclick="tambahBaris()" class="mt-2 flex items-center gap-2 text-blue-600 font-semibold hover:text-blue-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+                Tambah Pembelian
+            </button>
+
+            <!-- Result Section -->
+            <div class="mt-10 pt-6 border-t border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Harga Rata-Rata</span>
+                        <div id="res-avg" class="text-2xl font-bold text-blue-900 mt-1">Rp 0</div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Lot</span>
+                        <div id="res-total-lot" class="text-2xl font-bold text-slate-800 mt-1">0</div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Modal</span>
+                        <div id="res-total-modal" class="text-2xl font-bold text-slate-800 mt-1">Rp 0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note -->
+            <p class="text-[10px] text-slate-400 mt-6 text-center italic">
+                * 1 Lot diasumsikan 100 lembar saham. Perhitungan belum termasuk biaya broker (fee beli/jual).
+            </p>
+        </div>
+
+        <footer class="text-center mt-8 text-slate-400 text-sm">
+            &copy; 2024 StockCalc - Simple & Professional
+        </footer>
+    </div>
+
+    <script>
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(angka);
+        }
+
+        function tambahBaris() {
+            const container = document.getElementById('pembelian-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'pembelian-row grid grid-cols-12 gap-4 mb-4 items-end opacity-0 transform translate-y-2 transition-all duration-300';
+            newRow.innerHTML = `
+                <div class="col-span-6 md:col-span-5">
+                    <input type="number" class="harga-input w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Harga" oninput="hitungSemua()">
+                </div>
+                <div class="col-span-4 md:col-span-5">
+                    <input type="number" class="lot-input w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Lot" oninput="hitungSemua()">
+                </div>
+                <div class="col-span-2 md:col-span-2 flex justify-end">
+                    <button onclick="hapusBaris(this)" class="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            
+            // Trigger animation
+            setTimeout(() => {
+                newRow.classList.remove('opacity-0', 'translate-y-2');
+            }, 10);
+            
+            updateDeleteButtons();
+        }
+
+        function hapusBaris(btn) {
+            const row = btn.closest('.pembelian-row');
+            row.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                row.remove();
+                hitungSemua();
+                updateDeleteButtons();
+            }, 200);
+        }
+
+        function updateDeleteButtons() {
+            const rows = document.querySelectorAll('.pembelian-row');
+            const deleteBtns = document.querySelectorAll('.pembelian-row button');
+            if (rows.length <= 1) {
+                deleteBtns[0].classList.add('hidden');
+            } else {
+                deleteBtns.forEach(btn => btn.classList.remove('hidden'));
+            }
+        }
+
+        function hitungSemua() {
+            const rows = document.querySelectorAll('.pembelian-row');
+            let totalModal = 0;
+            let totalLembar = 0;
+            let totalLot = 0;
+
+            rows.forEach(row => {
+                const harga = parseFloat(row.querySelector('.harga-input').value) || 0;
+                const lot = parseFloat(row.querySelector('.lot-input').value) || 0;
+
+                if (harga > 0 && lot > 0) {
+                    const lembar = lot * 100;
+                    totalModal += harga * lembar;
+                    totalLembar += lembar;
+                    totalLot += lot;
+                }
+            });
+
+            const rataRata = totalLembar > 0 ? totalModal / totalLembar : 0;
+
+            document.getElementById('res-avg').innerText = rataRata > 0 ? formatRupiah(rataRata) : 'Rp 0';
+            document.getElementById('res-total-lot').innerText = totalLot;
+            document.getElementById('res-total-modal').innerText = formatRupiah(totalModal);
+        }
+
+        // Initialize UI
+        updateDeleteButtons();
+    </script>
+</body>
+</html>
+
